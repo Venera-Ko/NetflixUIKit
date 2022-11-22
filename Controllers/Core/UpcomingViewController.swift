@@ -40,12 +40,12 @@ class UpcomingViewController: UIViewController {
     }
     
     private func fetchUpcoming() {
-        APICaller.shared.getUpcomingMovies { result in
+        APICaller.shared.getUpcomingMovies { [weak self] result in
             switch result {
             case .success(let titles):
-                self.titles = titles
+                self?.titles = titles
                 DispatchQueue.main.async {
-                    self.upcomingTable.reloadData()
+                    self?.upcomingTable.reloadData()
                 }
             case .failure(let error):
                 print(error.localizedDescription)
