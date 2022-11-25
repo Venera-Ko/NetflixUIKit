@@ -22,6 +22,10 @@ enum Sections: Int {
 
 class HomeViewController: UIViewController {
     
+    private var randomTrendingMovie: Title?
+    
+    private var headerView: HeroHeaderUIView?
+    
     let sectionTitles: [String] = ["Trending Movies", "Trending TV", "Popular", "Upcoming Movies", "Top rated"]
     
     private let homeFeedTable: UITableView = {
@@ -41,11 +45,22 @@ class HomeViewController: UIViewController {
         
         configureNavBar()
         
-        let headerView = HeroHeaderUIView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 450))
+        headerView = HeroHeaderUIView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 450))
         homeFeedTable.tableHeaderView = headerView
         
+//        navigationController?.pushViewController(TitlePreviewViewController(), animated: true)
         
-        
+    }
+    
+    private func configureHeroHeaderView() {
+        APICaller.shared.getTrendingMovies { [weak self] result in
+            switch result {
+            case .success(let titles):
+                self?.randomTrendingMovie = titles.randomElement()
+            case .failure(let error):
+                print(error.localizedDescription)
+            }
+        }
     }
     
     private func configureNavBar() {
@@ -65,106 +80,119 @@ class HomeViewController: UIViewController {
         homeFeedTable.frame = view.bounds
     }
 }
+
+extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
     
-    extension HomeViewController: UITableViewDelegate, UITableViewDataSource {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        sectionTitles.count
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        1
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        func numberOfSections(in tableView: UITableView) -> Int {
-            sectionTitles.count
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: CollectionViewTableViewCell.identifier, for: indexPath) as? CollectionViewTableViewCell else {
+            return UITableViewCell()
         }
         
-        func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-            1
-        }
+        cell.delegate = self
         
-        func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-            
-            guard let cell = tableView.dequeueReusableCell(withIdentifier: CollectionViewTableViewCell.identifier, for: indexPath) as? CollectionViewTableViewCell else {
-                return UITableViewCell()
+        switch indexPath.section {
+        case Sections.TrendingMovies.rawValue:
+            APICaller.shared.getTrendingMovies { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
             }
             
-            switch indexPath.section {
-            case Sections.TrendingMovies.rawValue:
-                APICaller.shared.getTrendingMovies { result in
-                    switch result {
-                    case .success(let titles):
-                        cell.configure(with: titles)
-                    case .failure(let error):
-                        print(error.localizedDescription)
-                    }
+        case Sections.TrendingTV.rawValue:
+            APICaller.shared.getTrendingTVs { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
                 }
-                
-            case Sections.TrendingTV.rawValue:
-                APICaller.shared.getTrendingTVs { result in
-                    switch result {
-                    case .success(let titles):
-                        cell.configure(with: titles)
-                    case .failure(let error):
-                        print(error.localizedDescription)
-                    }
-                }
-                
-            case Sections.Popular.rawValue:
-                APICaller.shared.getPopular { result in
-                    switch result {
-                    case .success(let titles):
-                        cell.configure(with: titles)
-                    case .failure(let error):
-                        print(error.localizedDescription)
-                    }
-                }
-                
-            case Sections.Upcoming.rawValue:
-                APICaller.shared.getUpcomingMovies { result in
-                    switch result {
-                    case .success(let titles):
-                        cell.configure(with: titles)
-                    case .failure(let error):
-                        print(error.localizedDescription)
-                    }
-                }
-                
-            case Sections.TopRated.rawValue:
-                APICaller.shared.getTopRated { resuls in
-                    switch resuls {
-                    case .success(let titles):
-                        cell.configure(with: titles)
-                    case .failure(let error):
-                        print(error.localizedDescription)
-                    }
-                }
-                
-            default:
-                UITableViewCell()
             }
             
-            return cell
-        }
-        
-        func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-            200
-        }
-        
-        func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-            40
-        }
-        
-        func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
-            guard let header = view as? UITableViewHeaderFooterView else { return }
-            header.textLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
-            header.textLabel?.frame = CGRect(x: header.bounds.origin.x, y: header.bounds.origin.y, width: 100, height: header.bounds.height)
-            header.textLabel?.textColor = .white
-            header.textLabel?.text = header.textLabel?.text?.capitalizeFirstLetter()
-        }
-        
-        func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-            sectionTitles[section]
-        }
-        
-        func scrollViewDidScroll(_ scrollView: UIScrollView) {
-            let defaultOffset = view.safeAreaInsets.top
-            let offset = scrollView.contentOffset.y + defaultOffset
+        case Sections.Popular.rawValue:
+            APICaller.shared.getPopular { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
             
-            navigationController?.navigationBar.transform = .init(translationX: 0, y: min(0, -offset))
+        case Sections.Upcoming.rawValue:
+            APICaller.shared.getUpcomingMovies { result in
+                switch result {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+            
+        case Sections.TopRated.rawValue:
+            APICaller.shared.getTopRated { resuls in
+                switch resuls {
+                case .success(let titles):
+                    cell.configure(with: titles)
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+            
+        default:
+            UITableViewCell()
         }
         
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        200
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        40
+    }
+    
+    func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+        guard let header = view as? UITableViewHeaderFooterView else { return }
+        header.textLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
+        header.textLabel?.frame = CGRect(x: header.bounds.origin.x, y: header.bounds.origin.y, width: 100, height: header.bounds.height)
+        header.textLabel?.textColor = .white
+        header.textLabel?.text = header.textLabel?.text?.capitalizeFirstLetter()
+    }
+    
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        sectionTitles[section]
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let defaultOffset = view.safeAreaInsets.top
+        let offset = scrollView.contentOffset.y + defaultOffset
+        
+        navigationController?.navigationBar.transform = .init(translationX: 0, y: min(0, -offset))
+    }
+    
+}
+
+
+extension HomeViewController: CollectionViewTableViewCellDelegate {
+    func collectionViewTableViewCellDidTapCell(_ cell: CollectionViewTableViewCell, viewModel: TitlePreviewViewModel) {
+        DispatchQueue.main.async { [weak self] in
+            let vc = TitlePreviewViewController()
+            vc.configure(with: viewModel)
+            self?.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
 }
