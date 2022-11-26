@@ -47,6 +47,7 @@ class HomeViewController: UIViewController {
         
         headerView = HeroHeaderUIView(frame: CGRect(x: 0, y: 0, width: view.bounds.width, height: 450))
         homeFeedTable.tableHeaderView = headerView
+        configureHeroHeaderView()
         
 //        navigationController?.pushViewController(TitlePreviewViewController(), animated: true)
         
@@ -56,7 +57,11 @@ class HomeViewController: UIViewController {
         APICaller.shared.getTrendingMovies { [weak self] result in
             switch result {
             case .success(let titles):
-                self?.randomTrendingMovie = titles.randomElement()
+                let selectedTitle = titles.randomElement()
+                
+                self?.randomTrendingMovie = selectedTitle
+                
+                self?.headerView?.configure(with: TitleViewModel(titleName: selectedTitle?.original_title ?? "Unknown", posterURL: selectedTitle?.poster_path ?? "Unknown"))
             case .failure(let error):
                 print(error.localizedDescription)
             }
