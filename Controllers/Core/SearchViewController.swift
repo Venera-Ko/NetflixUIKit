@@ -83,6 +83,9 @@ extension SearchViewController: UITableViewDelegate, UITableViewDataSource {
         let model = TitleViewModel(titleName: title.original_name ?? title.original_title ?? "Unknown", posterURL: title.poster_path ?? "Unknown")
         cell.configure(with: model)
         
+        
+//        cell.textLabel?.text = titles[indexPath.row].original_name ?? titles[indexPath.row].original_title ?? "Unknown"
+        
         return cell
     }
     
